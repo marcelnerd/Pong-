@@ -1,0 +1,141 @@
+#include <GL/glut.h>  // GLUT, includes glu.h and gl.h
+#include <iostream>
+#include <stdio.h>
+#include <unistd.h>
+#include <ncursesw/curses.h>
+
+using namespace std;
+
+float racketWidth = 0.05;
+float racketHeight = 0.45;
+const int interval = 1000/60;
+const float leftXPos = -0.85;
+float leftYPos = 0.0;
+const float rightXPos = 0.85;
+float rightYPos = 0.0;
+const float racketSpeed = 0.05;
+float ballX = 0;
+float ballY = 0;
+float ballXSpeed = 0.01;
+float ballYSpeed = 0;
+const float ballSize = 0.05;
+
+void drawRackets();
+void display();
+void update(int value);
+void enable2D(int, int);
+void keyCheck(unsigned char, int, int);
+void drawBall();
+void moveBall();
+void checkCollisions();
+
+/* Main function: GLUT runs as a console application starting at main()  */
+int main(int argc, char** argv) {
+	//system("/bin/stty raw");
+	//initscr();
+	//nodelay(stdscr, TRUE);
+
+	glutInit(&argc, argv);                 // Initialize GLUT
+	glutCreateWindow("Bop"); // Create a window with the given title
+	glutInitWindowSize(320, 320);   // Set the window's initial width & height
+	glutInitWindowPosition(50, 50); // Position the window's initial top-left corner
+	glutDisplayFunc(display); // Register display callback handler for window re-paint
+	glutTimerFunc(interval, update, 0);
+	glutKeyboardFunc(keyCheck);
+   //enable2D(320, 320);
+   glutMainLoop();           // Enter the infinitely event-processing loop
+   //system("/bin/stty cooked");
+   return 0;
+}
+
+
+void display() {
+   //glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set background color to black and opaque
+   glClear(GL_COLOR_BUFFER_BIT);         // Clear the color buffer
+   drawRackets();
+   drawBall();
+   glFlush();  // Render now
+}
+
+void drawRackets() {
+	glBegin(GL_QUADS);
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glVertex2f(leftXPos, leftYPos);
+		glVertex2f(leftXPos - racketWidth, leftYPos);
+		glVertex2f(leftXPos - racketWidth, leftYPos + racketHeight);
+		glVertex2f(leftXPos, leftYPos + racketHeight);
+	glEnd();
+
+	glBegin(GL_QUADS);
+		glColor3f(0.0f, 0.0f, 1.0f);
+		glVertex2f(rightXPos, rightYPos);
+		glVertex2f(rightXPos + racketWidth, rightYPos);
+		glVertex2f(rightXPos + racketWidth, rightYPos + racketHeight);
+		glVertex2f(rightXPos, rightYPos + racketHeight);
+	glEnd();
+}
+void update(int value) {
+	glutTimerFunc(interval, update, 0);
+	moveBall();
+	checkCollisions();
+	glutPostRedisplay();
+}
+
+void enable2D(int width, int height) {
+    glViewport(0, 0, width, height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0.0f, width, 0.0f, height, 0.0f, 1.0f);
+    glMatrixMode (GL_MODELVIEW);
+    glLoadIdentity();
+}
+
+void keyCheck(unsigned char c, int i, int l) {
+
+	switch(c) {
+	case 'w':
+		leftYPos += racketSpeed;
+		break;
+	case 's':
+		leftYPos -= racketSpeed;
+		break;
+	case 'o':
+		rightYPos += racketSpeed;
+		break;
+	case 'l':
+		rightYPos -= racketSpeed;
+		break;
+	}
+
+	cout << c << endl;
+}
+
+void drawBall() {
+	glBegin(GL_QUADS);
+		glColor3f(0.0, 1.0, 0.0);
+		glVertex2f(ballX, ballY);
+		glVertex2f(ballX + ballSize, ballY);
+		glVertex2f(ballX + ballSize, ballY + ballSize);
+		glVertex2f(ballX, ballY + ballSize);
+	glEnd();
+}
+
+void moveBall() {
+	ballX += ballXSpeed;
+	ballY += ballYSpeed;
+}
+
+void checkCollisions() {
+	if((ballX + ballSize) >= rightXPos && (ballX + ballSize) <= (rightXPos + racketWidth) && ballY >= rightYPos && ballY <= (rightYPos + racketHeight)) {
+		ballXSpeed *= -1;
+	}
+
+	if(ballX <= leftXPos && ballX >= (leftXPos - racketWidth) && ballY <= (leftYPos + racketHeight) && (ballY + ballSize) >= leftYPos) {
+		ballXSpeed *= -1;
+	}
+
+	if(ballX >= 1 || ballX <= -1) {
+		ballX = 0;
+		ballY = 0;
+	}
+}
